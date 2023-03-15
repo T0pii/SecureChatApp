@@ -68,15 +68,13 @@ class Client:
         # r_post["IV"] = b64(....)
         # r_post["encdata"] = b64(encrypt(request_data)) # On va chiffrer le JSON
         
-        AES_gen_key()
+        temp = AES_gen_key()
 
-        r_post["enckey"] = RSA_encrypt(r_post["enckey"], K_S_pub)
+        r_post["encKey"] = RSA_encrypt(temp, K_S_pub)
 
         r_post["IV"] = AES_gen_IV()
 
-        r_post["encdata"] = AES_encrypt(request_data, r_post["enckey"], r_post["IV"])
-
-        print(r_post)
+        r_post["encData"] = AES_encrypt(request_data, r_post["encKey"], r_post["IV"])
         
         # r_post["encdata"] = request_data # TODO : delete me (Transmis en clair ici)
 
@@ -87,9 +85,9 @@ class Client:
         # FIXME : dechiffrer la réponse
         # reponse = decrypt(enc_r) ...
 
-        RSA_decrypt(r_post["enckey"], K_S_pub)
+        RSA_decrypt(temp, K_S_pub)
 
-        response = AES_decrypt(enc_r, r_post["enckey"], r_post["IV"])
+        response = AES_decrypt(enc_r, r_post["encKey"], r_post["IV"])
 
         # response = enc_r # TODO : delete me (Transmis en clair ici)
 
