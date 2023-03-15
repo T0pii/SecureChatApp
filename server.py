@@ -55,14 +55,12 @@ class Server(BaseHTTPRequestHandler):
 
         json_POST = json.loads(POST_data) # Charge le JSON de la requête
 
-        # TODO : déchiffrer la requête
-        # enckey = base64.b64decode(json_POST["enckey"] ...)
-        # encIV = json_POST["IV"]
-        # data = b64(decrypt(json_POST["encdata"])) ...
-
-        data = json_POST["encdata"] # TODO : delete me (Transmis en clair ici)
-
-        decrypted_request = json.loads(data) # Converti le JSON déchiffré en dict python
+        #Dechiffrement de la clé temp, puis du msg à l'aide de cette clé
+        K_temp = RSA_decrypt(json_POST["encKey"],K_S_priv)
+        IV=json_POST["IV"]
+        data = AES_decrypt(json_POST["encData"],K_temp,IV)
+        
+        decrypted_request = json.loads(data) # Convertit le JSON déchiffré en dict python
 
         response = self.handle_request(decrypted_request)
         json_response = json.dumps(response)
