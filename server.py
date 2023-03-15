@@ -85,6 +85,10 @@ class Server(BaseHTTPRequestHandler):
         retourne un dict python (converti en JSON plus tard)
         """
         global BDD
+        
+        def passwordHash(self, password, salt):
+            pepper = b"aUD&99xV^E2SQ$S9OODCz!fcJ1tY!x^tl2hu2dfl3bNuHJ1S21"
+            return hash(password.encode('utf-8')+salt.encode('utf-8')+pepper)
 
         print("[+] request received : ", params)
 
@@ -95,9 +99,9 @@ class Server(BaseHTTPRequestHandler):
                 return {"error":"Already exists"}
 
             BDD["users"][params["login"]] = {
-                "password":params["password"] # TODO : ou pas .....
-                }
-
+                "password":passwordHash(self,params['password'],params['login'])
+            }
+                        
             return {"message":"welcome"}
 
             # TODO : complet ? ....
@@ -107,11 +111,11 @@ class Server(BaseHTTPRequestHandler):
             if login not in BDD["users"].keys():
                 return {"error":"Bad login"}
             else:
-                if BDD["users"][login]["password"] == params["password"]: # TODO : re "ou pas" ....
-                    return {"message":"good login"}
+                #Comparaison des hashs
+                if BDD["users"][login]["password"] == passwordHash(self, params["password"],params["login"]):
+                    return {"message":"Good login"}
                 else:
-                    return {"error":"bad password"}
-        
+                    return {"error":"Bad password"}       
         # TODO : le reste ?   
         # elif action == get_message, send_message, etc ....
 
