@@ -67,8 +67,16 @@ class Client:
         # r_post["enckey"] = base64.b64encode(...)
         # r_post["IV"] = b64(....)
         # r_post["encdata"] = b64(encrypt(request_data)) # On va chiffrer le JSON
+        
+        temp = AES_gen_key()
 
-        r_post["encdata"] = request_data # TODO : delete me (Transmis en clair ici)
+        r_post["encKey"] = RSA_encrypt(temp, K_S_pub)
+
+        r_post["IV"] = AES_gen_IV()
+
+        r_post["encData"] = AES_encrypt(request_data, r_post["encKey"], r_post["IV"])
+        
+        # r_post["encdata"] = request_data # TODO : delete me (Transmis en clair ici)
 
         r = requests.post(SERVER_URL, data=json.dumps(r_post), proxies=PROXY)
     
@@ -77,7 +85,11 @@ class Client:
         # FIXME : dechiffrer la réponse
         # reponse = decrypt(enc_r) ...
 
-        response = enc_r # TODO : delete me (Transmis en clair ici)
+        RSA_decrypt(temp, K_S_pub)
+
+        response = AES_decrypt(enc_r, r_post["encKey"], r_post["IV"])
+
+        # response = enc_r # TODO : delete me (Transmis en clair ici)
 
         return json.loads(response) # La réponse en clair est du JSON, décodé ici en dict
 
