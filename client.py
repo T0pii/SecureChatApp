@@ -87,11 +87,12 @@ class Client:
 
         return json.loads(response) # Réponse JSON décodée en dict
 
-    def signup(self, user, passwd):
+    def signup(self, login, passwd):
         return self.send_request({"action":"signup", "login":login, "password":passwd})
+        
         # TODO : complet ? .....
 
-    def login(self, user, passwd):
+    def login(self, login, passwd):
         return self.send_request({"action":"login", "login":login, "password":passwd})
 
         
