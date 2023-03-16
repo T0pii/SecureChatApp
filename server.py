@@ -70,10 +70,16 @@ class Server(BaseHTTPRequestHandler):
 
         # TODO : chiffrer la réponse
         # encrypted_json = crypt(json_response) ...
+        r_post = {}
 
-        encrypted_json = json_response # TODO delete me (En clair ici aussi donc)
+        iv = AES_gen_IV()
+
+        r_post["iv"] = base64.b64encode(iv).decode('utf-8')
+        r_post["encData"] = base64.b64encode(AES_encrypt(json_response.encode('utf-8'), K_temp, iv)).decode('utf-8')
+
+        #encrypted_json = json_response # TODO delete me (En clair ici aussi donc)
         
-        json_response = json.dumps(encrypted_json)
+        json_response = json.dumps(r_post)
 
         self.send_response(200)
         self.end_headers()
