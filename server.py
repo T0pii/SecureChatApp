@@ -68,12 +68,9 @@ class Server(BaseHTTPRequestHandler):
         response = self.handle_request(decrypted_request)
         json_response = json.dumps(response)
 
-        # TODO : chiffrer la réponse
-        # encrypted_json = crypt(json_response) ...
         r_post = {}
 
         iv = AES_gen_IV()
-
         r_post["iv"] = base64.b64encode(iv).decode()
         r_post["encData"] = base64.b64encode(AES_encrypt(json_response.encode(), K_temp, iv)).decode()
 
@@ -95,7 +92,7 @@ class Server(BaseHTTPRequestHandler):
         
         def passwordHash(self, password, salt):
             pepper = b"aUD&99xV^E2SQ$S9OODCz!fcJ1tY!x^tl2hu2dfl3bNuHJ1S21"
-            return hash(password.encode('utf-8')+salt.encode('utf-8')+pepper)
+            return hash(password.encode()+salt.encode()+pepper)
 
         print("[+] request received : ", params)
 
