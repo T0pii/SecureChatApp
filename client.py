@@ -59,30 +59,33 @@ class Client:
         global PROXY
         global SERVER_URL
 
+        """
+        Chiffrement de la requête
+        """
+
         request_data = json.dumps(params) # transforme le paramètre en JSON (string)
         r_post = {}
 
         K_temp = AES_gen_key()
         iv = AES_gen_IV()
-        r_post["encKey"] = base64.b64encode(RSA_encrypt(K_temp, K_S_pub)).decode('utf-8')
-        r_post["iv"] = base64.b64encode(iv).decode('utf-8')
-        r_post["encData"] = base64.b64encode(AES_encrypt(request_data.encode('utf-8'), K_temp, iv)).decode('utf-8')
+        r_post["encKey"] = base64.b64encode(RSA_encrypt(K_temp, K_S_pub)).decode()
+        r_post["iv"] = base64.b64encode(iv).decode()
+        r_post["encData"] = base64.b64encode(AES_encrypt(request_data.encode(), K_temp, iv)).decode()
 
         r = requests.post(SERVER_URL, data=json.dumps(r_post), proxies=PROXY)
     
-        enc_r = r.text
+        """
+        Déchiffrement de la réponse
+        """
+    
+        encRep = json.loads(r.text)
         
+        iv = base64.b64decode(encRep["iv"])
+        encData = base64.b64decode(encRep["encData"])
+                
+        response = AES_decrypt(encData,K_temp,iv)
 
-        # TODO : dechiffrer la réponse
-        # reponse = decrypt(enc_r) ...
-
-        #RSA_decrypt(temp, K_S_pub)
-
-        #response = AES_decrypt(enc_r, r_post["encKey"], r_post["IV"])
-
-        response = enc_r # TODO : delete me (Transmis en clair ici)
-
-        return json.loads(response) # La réponse en clair est du JSON, décodé ici en dict
+        return json.loads(response) # Réponse JSON décodée en dict
 
     def signup(self, user, passwd):
         return self.send_request({"action":"signup", "login":login, "password":passwd})
