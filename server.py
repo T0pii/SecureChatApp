@@ -82,6 +82,9 @@ class Server(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json_response.encode())
 
+    def passwordHash(self, password, salt):
+        pepper = b"aUD&99xV^E2SQ$S9OODCz!fcJ1tY!x^tl2hu2dfl3bNuHJ1S21"
+        return hash(password.encode()+salt.encode()+pepper)
 
     def handle_request(self, params:dict)->dict:
         """
@@ -90,10 +93,6 @@ class Server(BaseHTTPRequestHandler):
         """
         global BDD
         
-        def passwordHash(self, password, salt):
-            pepper = b"aUD&99xV^E2SQ$S9OODCz!fcJ1tY!x^tl2hu2dfl3bNuHJ1S21"
-            return hash(password.encode()+salt.encode()+pepper)
-
         print("[+] request received : ", params)
 
         if params["action"] == "signup":
@@ -103,7 +102,7 @@ class Server(BaseHTTPRequestHandler):
                 return {"error":"Already exists"}
 
             BDD["users"][params["login"]] = {
-                "password":passwordHash(self,params['password'],params['login'])
+                "password":self.passwordHash(params['password'],params['login'])
             }
                         
             return {"message":"welcome"}
@@ -116,7 +115,7 @@ class Server(BaseHTTPRequestHandler):
                 return {"error":"Bad login"}
             else:
                 #Comparaison des hashs
-                if BDD["users"][login]["password"] == passwordHash(self, params["password"],params["login"]):
+                if BDD["users"][login]["password"] == self.passwordHash(params["password"],params["login"]):
                     return {"message":"Good login"}
                 else:
                     return {"error":"Bad password"}       
