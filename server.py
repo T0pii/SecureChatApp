@@ -74,8 +74,8 @@ class Server(BaseHTTPRequestHandler):
 
         iv = AES_gen_IV()
 
-        r_post["iv"] = base64.b64encode(iv).decode('utf-8')
-        r_post["encData"] = base64.b64encode(AES_encrypt(json_response.encode('utf-8'), K_temp, iv)).decode('utf-8')
+        r_post["iv"] = base64.b64encode(iv).decode()
+        r_post["encData"] = base64.b64encode(AES_encrypt(json_response.encode(), K_temp, iv)).decode()
 
         #encrypted_json = json_response # TODO delete me (En clair ici aussi donc)
         
