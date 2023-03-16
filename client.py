@@ -48,7 +48,7 @@ def choices(text, responses_list):
 class Client:
 
     def __init__(self):
-        pass
+        self.pubKey, self.privKey = RSA_gen_key()
 
     def send_request(self, params):
         """
@@ -87,13 +87,41 @@ class Client:
 
         return json.loads(response) # Réponse JSON décodée en dict
 
+    """
+    Inscription de l'utilisateur et envoi de sa clé publique pour la gestion des messages
+    """
     def signup(self, login, passwd):
-        return self.send_request({"action":"signup", "login":login, "password":passwd})
-        
-        # TODO : complet ? .....
-
+        return self.send_request({"action":"signup", "login":login, "password":passwd,"pubKey" : RSA_export_key(self.pubKey).decode()})
+    
+    """
+    Demande de connexion de l'utilisateur
+    """
     def login(self, login, passwd):
         return self.send_request({"action":"login", "login":login, "password":passwd})
+
+    """
+    Récupère les clés publiques des autres utilisateurs
+    """
+    def get_pub_keys(self, login):
+        return self.send_request({"action":"retrieve_users"})
+    
+    """
+    Envoie un message    
+    """
+    def send_message(self, message)
+        return self.send_request({"action":"send_msg"})
+    
+    
+    """
+    Menu de gestion des messages
+    """
+    def manage_messages(self):
+        while True:
+            r = choices("What to do ?", ["Envoyer un message", "Réceptionner des messages"])
+            if r == 1:
+                print("envoi")
+            else:
+                print("reception")
 
         
 
@@ -106,7 +134,9 @@ if r == 1:
     passwd = input("Password : ").strip()
 
     r = c.signup(login, passwd)
+    print("message : ")
     print(r)
+    c.manageMessages()
 
 else:
     # Log in
@@ -116,5 +146,6 @@ else:
 
     r = c.login(login, passwd)
     print(r)
+    c.manageMessages()
 
     # recevoir les messages, demander à qui envoyer, etc ....

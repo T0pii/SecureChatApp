@@ -10,6 +10,7 @@ from common import *
 # "JSON"  database in memory
 BDD = {
     "users":{},
+    "keys" : [],
     "messages":[]
 } 
 
@@ -82,7 +83,7 @@ class Server(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json_response.encode())
 
-    def passwordHash(self, password, salt):
+    def password_hash(self, password, salt):
         pepper = b"aUD&99xV^E2SQ$S9OODCz!fcJ1tY!x^tl2hu2dfl3bNuHJ1S21"
         return hash(password.encode()+salt.encode()+pepper)
 
@@ -102,16 +103,17 @@ class Server(BaseHTTPRequestHandler):
                 return {"error":"Already exists"}
 
             BDD["users"][params["login"]] = {
-                "password":self.passwordHash(params['password'],params['login'])
+                "password":self.password_hash(params['password'],params['login']),
+                "pubKey":RSA_import_key(params['pubKey'])
             }
-                        
+                                    
             return {"message":"welcome"}
 
             # TODO : complet ? ....
 
         elif params["action"] == "login":
             login = params["login"]
-            if login not in BDD["users"].keys() or BDD["users"][login]["password"] != self.passwordHash(params["password"],params["login"]):
+            if login not in BDD["users"].keys() or BDD["users"][login]["password"] != self.password_hash(params["password"],params["login"]):
                 return {"error":"Bad login or password"}
             else:
                 return {"message":"Good credentials"}       
