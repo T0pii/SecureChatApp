@@ -63,18 +63,31 @@ class Client:
 
         r_post = {}
 
-        # FIXME : chiffrer la requête ...
+        # TODO : chiffrer la requête ...
         # r_post["enckey"] = base64.b64encode(...)
         # r_post["IV"] = b64(....)
         # r_post["encdata"] = b64(encrypt(request_data)) # On va chiffrer le JSON
         
-        temp = AES_gen_key()
+        # Génération clé temporaire
+        KeyT = AES_gen_key()
 
-        r_post["encKey"] = RSA_encrypt(temp, K_S_pub)
+        # Génération d'un IV
+        IVs = AES_gen_IV()
+        
+        # Chiffrage avec AES du message avec la clé temporaire et l'IV
+        enCrypt = AES_encrypt(request_data, KeyT, IVs)
 
-        r_post["IV"] = AES_gen_IV()
+        # Chiffrement de la clé temporaire
+        enCryptAES = RSA_encrypt(enCrypt, K_S_pub)
 
-        r_post["encData"] = AES_encrypt(request_data, r_post["encKey"], r_post["IV"])
+        # Affichage JSON Clé AES Chiffrée
+        r_post["encKey"] = enCryptAES
+
+        # Afichage JSON IV
+        r_post["IV"] = IVs
+
+        # Affichage JSON message chiffré
+        r_post["encdata"] = enCrypt
         
         # r_post["encdata"] = request_data # TODO : delete me (Transmis en clair ici)
 
@@ -82,12 +95,14 @@ class Client:
     
         enc_r = r.text
 
-        # FIXME : dechiffrer la réponse
+        # TODO : dechiffrer la réponse
         # reponse = decrypt(enc_r) ...
 
-        RSA_decrypt(temp, K_S_pub)
+        # Dechiffrement de la clé AES chiffrée
+        deCryptAES = RSA_decrypt(KeyT, K_S_pub)
 
-        response = AES_decrypt(enc_r, r_post["encKey"], r_post["IV"])
+        # Dechiffrement du message chiffré en AES
+        response = AES_decrypt(enc_r, deCryptAES, IVs)
 
         # response = enc_r # TODO : delete me (Transmis en clair ici)
 
