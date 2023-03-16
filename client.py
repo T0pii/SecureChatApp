@@ -52,44 +52,35 @@ class Client:
 
     def send_request(self, params):
         """
-        Envoi au serveur un dict python (params) transformé en JSON
-        Etablie le canal chiffré (attaquant 1) avec le serveur
+        Envoie au serveur un dict python (params) transformé en JSON
+        Etablit le canal chiffré (attaquant 1) avec le serveur
         """
         global K_S_pub
         global PROXY
         global SERVER_URL
 
         request_data = json.dumps(params) # transforme le paramètre en JSON (string)
-
         r_post = {}
 
-        # FIXME : chiffrer la requête ...
-        # r_post["enckey"] = base64.b64encode(...)
-        # r_post["IV"] = b64(....)
-        # r_post["encdata"] = b64(encrypt(request_data)) # On va chiffrer le JSON
-        
-        temp = AES_gen_key()
-
-        r_post["encKey"] = RSA_encrypt(temp, K_S_pub)
-
-        r_post["IV"] = AES_gen_IV()
-
-        r_post["encData"] = AES_encrypt(request_data, r_post["encKey"], r_post["IV"])
-        
-        # r_post["encdata"] = request_data # TODO : delete me (Transmis en clair ici)
+        K_temp = AES_gen_key()
+        iv = AES_gen_IV()
+        r_post["encKey"] = base64.b64encode(RSA_encrypt(K_temp, K_S_pub)).decode('utf-8')
+        r_post["iv"] = base64.b64encode(iv).decode('utf-8')
+        r_post["encData"] = base64.b64encode(AES_encrypt(request_data.encode('utf-8'), K_temp, iv)).decode('utf-8')
 
         r = requests.post(SERVER_URL, data=json.dumps(r_post), proxies=PROXY)
     
         enc_r = r.text
+        
 
-        # FIXME : dechiffrer la réponse
+        # TODO : dechiffrer la réponse
         # reponse = decrypt(enc_r) ...
 
-        RSA_decrypt(temp, K_S_pub)
+        #RSA_decrypt(temp, K_S_pub)
 
-        response = AES_decrypt(enc_r, r_post["encKey"], r_post["IV"])
+        #response = AES_decrypt(enc_r, r_post["encKey"], r_post["IV"])
 
-        # response = enc_r # TODO : delete me (Transmis en clair ici)
+        response = enc_r # TODO : delete me (Transmis en clair ici)
 
         return json.loads(response) # La réponse en clair est du JSON, décodé ici en dict
 
@@ -108,7 +99,7 @@ r = choices("What to do ?", ["Sign Up", "Log in"])
 if r == 1:
     # Sign up
     login = input("Login : ").strip()
-    passwd = input("Pasword : ").strip()
+    passwd = input("Password : ").strip()
 
     r = c.signup(login, passwd)
     print(r)
@@ -117,7 +108,7 @@ else:
     # Log in
 
     login = input("Login : ").strip()
-    passwd = input("Pasword : ").strip()
+    passwd = input("Password : ").strip()
 
     r = c.login(login, passwd)
     print(r)
