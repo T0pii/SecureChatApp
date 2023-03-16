@@ -19,6 +19,7 @@ def hash(data:bytes):
 ### SYMETRIC
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.padding import PKCS7
 
 def AES_gen_key() -> bytes:
     """
@@ -37,8 +38,10 @@ def AES_encrypt(data, key, iv) -> bytes:
     Encrypt data with AES using key and iv
     """
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    padder = PKCS7(algorithms.AES.block_size).padder()
+    padded_data = padder.update(data) + padder.finalize()
     encryptor = cipher.encryptor()
-    enc = encryptor.update(data) + encryptor.finalize()
+    enc = encryptor.update(padded_data) + encryptor.finalize()
     return enc
 
 def AES_decrypt(enc, key, iv) -> bytes:
@@ -47,7 +50,9 @@ def AES_decrypt(enc, key, iv) -> bytes:
     """
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
     decryptor = cipher.decryptor()
-    dec = decryptor.update(enc) + decryptor.finalize()
+    padded_data = decryptor.update(enc) + decryptor.finalize()
+    unpadder = PKCS7(algorithms.AES.block_size).unpadder()
+    dec = unpadder.update(padded_data) + unpadder.finalize()
     return dec
 
 def PBKDF2(password) -> bytes:
@@ -139,7 +144,7 @@ def RSA_decrypt(data, key) -> bytes:
 #
 
 if __name__ == "__main__":
-    data = b"my super message"
+    data = b"my super mes^boiquj<gvuhyezfgzeyutfzefzgeftyuesfzefzefzeg"
 
     K = AES_gen_key()
     IV = AES_gen_IV()
