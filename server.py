@@ -55,27 +55,36 @@ class Server(BaseHTTPRequestHandler):
 
         json_POST = json.loads(POST_data) # Charge le JSON de la requête
 
-        #Dechiffrement de la clé temp, puis du msg à l'aide de cette clé
-        K_temp = RSA_decrypt(json_POST["encKey"],K_S_priv)
-        IV=json_POST["IV"]
-        data = AES_decrypt(json_POST["encData"],K_temp,IV)
+
+        encKey = base64.b64decode(json_POST["encKey"])
+        iv = base64.b64decode(json_POST["iv"])
+        encData = base64.b64decode(json_POST["encData"])
+
+        K_temp = RSA_decrypt(encKey,K_S_priv)
+        data = AES_decrypt(encData,K_temp,iv)
         
         decrypted_request = json.loads(data) # Convertit le JSON déchiffré en dict python
 
         response = self.handle_request(decrypted_request)
         json_response = json.dumps(response)
 
-        # TODO : chiffrer la réponse
-        # encrypted_json = crypt(json_response) ...
+        r_post = {}
 
-        encrypted_json = json_response # TODO delete me (En clair ici aussi donc)
+        iv = AES_gen_IV()
+        r_post["iv"] = base64.b64encode(iv).decode()
+        r_post["encData"] = base64.b64encode(AES_encrypt(json_response.encode(), K_temp, iv)).decode()
+
+        #encrypted_json = json_response # TODO delete me (En clair ici aussi donc)
         
-        json_response = json.dumps(encrypted_json)
+        json_response = json.dumps(r_post)
 
         self.send_response(200)
         self.end_headers()
         self.wfile.write(json_response.encode())
 
+    def passwordHash(self, password, salt):
+        pepper = b"aUD&99xV^E2SQ$S9OODCz!fcJ1tY!x^tl2hu2dfl3bNuHJ1S21"
+        return hash(password.encode()+salt.encode()+pepper)
 
     def handle_request(self, params:dict)->dict:
         """
@@ -84,10 +93,6 @@ class Server(BaseHTTPRequestHandler):
         """
         global BDD
         
-        def passwordHash(self, password, salt):
-            pepper = b"aUD&99xV^E2SQ$S9OODCz!fcJ1tY!x^tl2hu2dfl3bNuHJ1S21"
-            return hash(password.encode('utf-8')+salt.encode('utf-8')+pepper)
-
         print("[+] request received : ", params)
 
         if params["action"] == "signup":
@@ -97,7 +102,7 @@ class Server(BaseHTTPRequestHandler):
                 return {"error":"Already exists"}
 
             BDD["users"][params["login"]] = {
-                "password":passwordHash(self,params['password'],params['login'])
+                "password":self.passwordHash(params['password'],params['login'])
             }
                         
             return {"message":"welcome"}
@@ -106,14 +111,10 @@ class Server(BaseHTTPRequestHandler):
 
         elif params["action"] == "login":
             login = params["login"]
-            if login not in BDD["users"].keys():
-                return {"error":"Bad login"}
+            if login not in BDD["users"].keys() or BDD["users"][login]["password"] != self.passwordHash(params["password"],params["login"]):
+                return {"error":"Bad login or password"}
             else:
-                #Comparaison des hashs
-                if BDD["users"][login]["password"] == passwordHash(self, params["password"],params["login"]):
-                    return {"message":"Good login"}
-                else:
-                    return {"error":"Bad password"}       
+                return {"message":"Good credentials"}       
         # TODO : le reste ?   
         # elif action == get_message, send_message, etc ....
 

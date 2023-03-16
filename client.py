@@ -52,67 +52,47 @@ class Client:
 
     def send_request(self, params):
         """
-        Envoi au serveur un dict python (params) transformé en JSON
-        Etablie le canal chiffré (attaquant 1) avec le serveur
+        Envoie au serveur un dict python (params) transformé en JSON
+        Etablit le canal chiffré (attaquant 1) avec le serveur
         """
         global K_S_pub
         global PROXY
         global SERVER_URL
 
-        request_data = json.dumps(params) # transforme le paramètre en JSON (string)
+        """
+        Chiffrement de la requête
+        """
 
+        request_data = json.dumps(params) # transforme le paramètre en JSON (string)
         r_post = {}
 
-        # TODO : chiffrer la requête ...
-        # r_post["enckey"] = base64.b64encode(...)
-        # r_post["IV"] = b64(....)
-        # r_post["encdata"] = b64(encrypt(request_data)) # On va chiffrer le JSON
-        
-        # Génération clé temporaire
-        KeyT = AES_gen_key()
-
-        # Génération d'un IV
-        IVs = AES_gen_IV()
-        
-        # Chiffrage avec AES du message avec la clé temporaire et l'IV
-        enCrypt = AES_encrypt(request_data, KeyT, IVs)
-
-        # Chiffrement de la clé temporaire
-        enCryptAES = RSA_encrypt(enCrypt, K_S_pub)
-
-        # Affichage JSON Clé AES Chiffrée
-        r_post["encKey"] = enCryptAES
-
-        # Afichage JSON IV
-        r_post["IV"] = IVs
-
-        # Affichage JSON message chiffré
-        r_post["encdata"] = enCrypt
-        
-        # r_post["encdata"] = request_data # TODO : delete me (Transmis en clair ici)
+        K_temp = AES_gen_key()
+        iv = AES_gen_IV()
+        r_post["encKey"] = base64.b64encode(RSA_encrypt(K_temp, K_S_pub)).decode()
+        r_post["iv"] = base64.b64encode(iv).decode()
+        r_post["encData"] = base64.b64encode(AES_encrypt(request_data.encode(), K_temp, iv)).decode()
 
         r = requests.post(SERVER_URL, data=json.dumps(r_post), proxies=PROXY)
     
-        enc_r = r.text
+        """
+        Déchiffrement de la réponse
+        """
+    
+        encRep = json.loads(r.text)
+        
+        iv = base64.b64decode(encRep["iv"])
+        encData = base64.b64decode(encRep["encData"])
+                
+        response = AES_decrypt(encData,K_temp,iv)
 
-        # TODO : dechiffrer la réponse
-        # reponse = decrypt(enc_r) ...
+        return json.loads(response) # Réponse JSON décodée en dict
 
-        # Dechiffrement de la clé AES chiffrée
-        deCryptAES = RSA_decrypt(KeyT, K_S_pub)
-
-        # Dechiffrement du message chiffré en AES
-        response = AES_decrypt(enc_r, deCryptAES, IVs)
-
-        # response = enc_r # TODO : delete me (Transmis en clair ici)
-
-        return json.loads(response) # La réponse en clair est du JSON, décodé ici en dict
-
-    def signup(self, user, passwd):
+    def signup(self, login, passwd):
         return self.send_request({"action":"signup", "login":login, "password":passwd})
+        
         # TODO : complet ? .....
 
-    def login(self, user, passwd):
+    def login(self, login, passwd):
         return self.send_request({"action":"login", "login":login, "password":passwd})
 
         
@@ -123,7 +103,7 @@ r = choices("What to do ?", ["Sign Up", "Log in"])
 if r == 1:
     # Sign up
     login = input("Login : ").strip()
-    passwd = input("Pasword : ").strip()
+    passwd = input("Password : ").strip()
 
     r = c.signup(login, passwd)
     print(r)
@@ -132,7 +112,7 @@ else:
     # Log in
 
     login = input("Login : ").strip()
-    passwd = input("Pasword : ").strip()
+    passwd = input("Password : ").strip()
 
     r = c.login(login, passwd)
     print(r)
