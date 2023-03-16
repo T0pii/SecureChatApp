@@ -111,14 +111,10 @@ class Server(BaseHTTPRequestHandler):
 
         elif params["action"] == "login":
             login = params["login"]
-            if login not in BDD["users"].keys():
-                return {"error":"Bad login"}
+            if login not in BDD["users"].keys() or BDD["users"][login]["password"] != self.passwordHash(params["password"],params["login"]):
+                return {"error":"Bad login or password"}
             else:
-                #Comparaison des hashs
-                if BDD["users"][login]["password"] == self.passwordHash(params["password"],params["login"]):
-                    return {"message":"Good login"}
-                else:
-                    return {"error":"Bad password"}       
+                return {"message":"Good credentials"}       
         # TODO : le reste ?   
         # elif action == get_message, send_message, etc ....
 
