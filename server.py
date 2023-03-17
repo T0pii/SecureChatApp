@@ -10,7 +10,6 @@ from common import *
 # "JSON"  database in memory
 BDD = {
     "users":{},
-    "keys" : [],
     "messages":[]
 } 
 
@@ -116,10 +115,13 @@ class Server(BaseHTTPRequestHandler):
             if login not in BDD["users"].keys() or BDD["users"][login]["password"] != self.password_hash(params["password"],params["login"]):
                 return {"error":"Bad login or password"}
             else:
-                return {"message":"Good credentials"}       
-        # TODO : le reste ?   
-        # elif action == get_message, send_message, etc ....
-
+                return {"message":"Good credentials"}
+        
+        elif params["action"] == "retrieve_user_keys":
+            senderLogin = params["login"]
+            #TODO : récupérer les clés et formater le json
+            userKeys = {} 
+            return userKeys
 
 httpd = HTTPServer(('localhost', 80), Server)
 print("[+] Server waiting ...")
