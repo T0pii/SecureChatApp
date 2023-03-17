@@ -102,13 +102,13 @@ class Client:
     """
     Récupère les clés publiques des autres utilisateurs
     """
-    def get_pub_keys(self, login):
-        return self.send_request({"action":"retrieve_users"})
+    def retrieve_user_keys(self, login):
+        return self.send_request({"action":"retrieve_user_keys", "login":login})
     
     """
     Envoie un message    
     """
-    def send_message(self, message)
+    def send_message(self, message):
         return self.send_request({"action":"send_msg"})
     
     
@@ -119,7 +119,9 @@ class Client:
         while True:
             r = choices("What to do ?", ["Envoyer un message", "Réceptionner des messages"])
             if r == 1:
-                print("envoi")
+                rep = c.retrieve_user_keys(login)
+                print(rep)
+                
             else:
                 print("reception")
 
@@ -136,7 +138,7 @@ if r == 1:
     r = c.signup(login, passwd)
     print("message : ")
     print(r)
-    c.manageMessages()
+    c.manage_messages()
 
 else:
     # Log in
